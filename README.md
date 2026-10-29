@@ -51,7 +51,9 @@ Investigators see full details only for their own parts; other investigators' pa
 | Send case back (any time, no request needed) | ✔ | ✔ | ✔ | |
 | Review and approve own submitted parts; send completed case to Main Admin | ✔ | ✔ | ✔ | |
 | Complete case directly / approve-deny edit requests | ✔ | ✔ | ✔ | |
-| **See investigator password / reset it** | ✔ | ✔ | ✗ | ✗ |
+| View investigator Aadhaar upload (within scope) | ✔ | ✔ | ✔ | Own account only |
+| View another user's password | ✗ | ✗ | ✗ | ✗ |
+| Reset another user's password (requires change at next login) | ✔ | ✔ | ✗ | ✗ |
 | Audit log | ✔ | | | |
 | Fill checklist, submit, letters, forms (own parts) | | | | ✔ |
 | Request part transfer | | | | ✔ |
@@ -62,6 +64,12 @@ Menus — Admin: New Case · Cases List · Investigators · Request for Edit · 
 Investigator: Case List · Withdrawal Letter · Fraud Letter · Employee Info Form · Patient Questionnaire.
 
 Isolation: users carry an `ownerAdmin`; each case part also has an owner State Admin. State Admin A never sees B's investigators or assistants and only sees the case parts routed to A (with completion-only status for other State Admin parts). Main Admin sees all.
+
+## Investigator Aadhaar uploads and missing-file 404
+
+Admins and office assistants can open an investigator's Aadhaar upload only when that investigator is within their permitted scope. Investigators can access only their own upload. Uploads are served through an authenticated endpoint, not directly from the public static folder.
+
+If a user's record points to an upload that is missing from `APP_UPLOAD_DIR`, opening `/api/users/{username}/aadhar-file` in a browser returns HTTP 404 with the branded [Aadhaar file not found page](./src/main/resources/static/aadhar-not-found.html). API clients continue to receive a JSON 404 response. The page explains that an administrator must restore the file from backup or upload it again; it does not expose or recreate the missing document.
 
 ## The case flow
 
