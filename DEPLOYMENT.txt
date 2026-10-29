@@ -1,0 +1,131 @@
+HEALTH CLAIM CASE DESK - WINDOWS LOCAL SETUP
+============================================
+
+This guide is for running the application locally on Windows. The optional
+Cloudflare tunnel creates a public demo link; it is not production deployment.
+
+1. INSTALL THE REQUIREMENTS
+---------------------------
+
+Install these tools and make sure their command-line executables are on PATH:
+
+- Java JDK 17 or newer:
+  https://adoptium.net/temurin/releases/?version=17
+- Apache Maven 3.9 or newer:
+  https://maven.apache.org/download.cgi
+- MySQL Server 8.x:
+  https://dev.mysql.com/downloads/installer/
+- MySQL Shell:
+  https://dev.mysql.com/downloads/shell/
+- cloudflared (only if you need a public demo link):
+  https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+
+Spring Boot does not need a separate installation. Maven downloads the
+Spring Boot and other project dependencies from the versions in pom.xml on
+the first build, so the first build needs internet access.
+
+Open Command Prompt (CMD) and check the tools:
+
+  java -version
+  mvn -version
+  mysqlsh --version
+  cloudflared --version
+
+The cloudflared check is optional unless you plan to create a demo link.
+
+2. CREATE THE LOCAL DATABASE
+----------------------------
+
+Start the MySQL Server service. Open MySQL Shell from CMD:
+
+  mysqlsh
+
+At the MySQL Shell prompt, enter:
+
+  \sql
+  \connect root@localhost:3306
+
+Enter the MySQL root password when prompted. Then create/select the app
+database and exit:
+
+  CREATE DATABASE IF NOT EXISTS casedesk CHARACTER SET utf8mb4;
+  USE casedesk;
+  \q
+
+The application creates/updates its tables when it starts. Keep MySQL
+running while using the app.
+
+3. BUILD AND RUN LOCALLY
+------------------------
+
+In CMD, change to the project folder (adjust the path if you placed it
+somewhere else):
+
+  cd /d E:\casedesk-project
+
+Set the MySQL credentials for this CMD window. Replace the placeholder with
+your local MySQL root password; do not save a real password in this file:
+
+  set DB_USER=root
+  set DB_PASSWORD=your_mysql_root_password
+
+The application requires a private 32-byte Base64 encryption key. Generate a
+new key in PowerShell with:
+
+  $bytes = New-Object byte[] 32; $rng = [Security.Cryptography.RandomNumberGenerator]::Create(); $rng.GetBytes($bytes); [Convert]::ToBase64String($bytes)
+
+Copy the printed value into this CMD window:
+
+  set APP_CRYPTO_KEY=paste_generated_base64_key_here
+
+On the original development machine, application-dev-local.properties
+preserves the existing local key and is excluded from Git. Keep it backed up
+and use the same key for existing encrypted database data. On a fresh checkout,
+generate a new key as shown above and keep it backed up. Never replace the key
+for a database that already contains encrypted data; restore its original key.
+
+Optionally choose the initial Main Admin password in this CMD window too:
+
+  set APP_BOOTSTRAP_ADMIN_PASSWORD=choose_a_strong_initial_password
+
+Build the application:
+
+  mvn clean package -DskipTests
+
+Start it using the local development profile:
+
+  mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+When startup completes, open:
+
+  http://localhost:8080
+
+Leave this CMD window open while using the application. Press Ctrl+C here to
+stop it. For the first login, use the bootstrap account configured by the
+application; set APP_BOOTSTRAP_ADMIN_PASSWORD before starting if you want to
+choose its initial password. Otherwise, check the application startup log for
+the generated password.
+
+4. OPTIONAL: CREATE A TEMPORARY DEMO LINK
+-----------------------------------------
+
+Keep the application running locally. Open a second CMD window and run:
+
+  cloudflared.exe tunnel --url http://localhost:8080
+
+Cloudflared prints a temporary https:// link. Share that link for the demo;
+the tunnel window and local application must both stay open. The link can
+change when the tunnel is restarted.
+
+IMPORTANT SECURITY NOTES
+------------------------
+
+- The dev profile disables the Secure-only session cookie. Never use it in
+  production. Keep APP_CRYPTO_KEY private and backed up; losing or changing
+  it makes existing encrypted data unreadable.
+- Anyone with the Cloudflare demo link may be able to reach the login page.
+  Share it only with intended demo participants and stop the tunnel when
+  finished.
+- For production, configure HTTPS, strong secrets, a dedicated least-privilege
+  MySQL user, backups, and a production deployment profile. Do not expose the
+  local development server as a production service.

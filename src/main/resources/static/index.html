@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="robots" content="noindex,nofollow">
+<title>Health claim Investigation — Case Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="/page-loader.png">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<div id="page-loader" class="page-loader" role="status" aria-live="polite">
+  <div class="page-loader-content">
+    <img id="page-loader-image" src="/page-loader.png" alt="" fetchpriority="high" decoding="sync">
+    <span id="page-loader-fallback" hidden>Loading...</span>
+  </div>
+</div>
+
+<div id="screen-login" class="login-shell" style="display:none;">
+  <div class="login-box">
+    <div class="brand"><div class="mark">H</div><div class="brand-text"><div class="name">Health Claim Investigation</div><div class="tag">Case Desk</div></div></div>
+    <p class="login-welcome">Welcome back<br><span>Sign in to continue to your cases</span></p>
+    <div class="field"><label for="loginUser">Username</label><input id="loginUser" autocomplete="username" maxlength="80" placeholder="Enter your username"></div>
+    <div class="field"><label for="loginPass">Password</label><div class="password-input"><input id="loginPass" type="password" autocomplete="current-password" maxlength="100" placeholder="Enter your password"><button type="button" class="password-toggle" data-act="togglePassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+    <button class="btn brick block" data-act="login">Sign in</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="app-shell" style="display:none;">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" id="brandMark">H</div>
+      <div class="brand-text"><div class="name">Health Claim Investigation</div><div class="tag">Case Desk</div></div>
+    </div>
+
+    <div class="menu-wrap">
+      <button type="button" class="menu-btn" id="menuBtn" data-act="toggleMenu" aria-haspopup="true" aria-expanded="false" aria-controls="sidebar" aria-label="Open menu">
+        <span class="menu-avatar" id="menuAvatar"><span id="menuInitial">?</span><img id="menuPhoto" class="hide" alt=""></span>
+        <span class="menu-name" id="menuName"></span>
+        <span class="menu-caret" aria-hidden="true"></span>
+      </button>
+
+      <aside class="menu-panel" id="sidebar" aria-label="Menu">
+        <div class="side-user">
+          <img id="whoPhoto" class="avatar hide" alt="">
+          <div class="who"><small>Signed in as</small><b id="whoName">—</b><span id="whoRole">—</span></div>
+        </div>
+        <div class="side-label">Menu</div>
+        <nav class="tabbar" id="tabbar" aria-label="Main menu"></nav>
+        <div class="side-actions">
+          <button type="button" data-act="myProfile">My profile</button>
+          <button type="button" data-act="openPw">Change password</button>
+          <button type="button" class="danger" data-act="logout">Sign out</button>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <div id="alertBar"></div>
+  <main class="wrap" id="view"></main>
+</div>
+
+<div id="modalHost"></div>
+<div id="toastHost"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

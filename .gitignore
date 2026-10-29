@@ -1,0 +1,11 @@
+target/
+*.class
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# uploaded identity files and local secrets
+uploads/
+*.env
+application-dev-local.properties

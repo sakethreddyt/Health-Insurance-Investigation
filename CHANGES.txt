@@ -1,0 +1,47 @@
+CASE DESK - "Main Admin assigns to a State Admin" update
+=========================================================
+DATABASE: NO CHANGE NEEDED. No new table, column or enum value.
+(The existing cases.ownerAdmin column stores the State Admin; Hibernate ddl-auto=update keeps working.)
+
+FILES TO REPLACE (same paths inside casedesk-project/):
+  src/main/java/com/healthclaim/casedesk/service/Dto.java
+  src/main/java/com/healthclaim/casedesk/service/CaseService.java
+  src/main/resources/static/index.html
+  src/main/resources/static/app.css
+  src/main/resources/static/app.js
+
+THEN: mvn clean package   -> run the new target/casedesk.jar  -> hard-refresh the browser (Ctrl+F5)
+
+OPTIONAL SQL (read-only checks, safe to run in MySQL):
+  -- cases created by Main Admin that still wait for a State Admin to choose investigators
+  SELECT id, tmcNumber, ownerAdmin, createdAt FROM cases WHERE investigatorUsername = '' ORDER BY createdAt DESC;
+
+  -- how many such cases each State Admin has
+  SELECT ownerAdmin, COUNT(*) AS waiting FROM cases WHERE investigatorUsername = '' GROUP BY ownerAdmin;
+
+
+MRD CHARGES BILL TRACKING - HOSPITAL PART
+=========================================
+The investigator can record whether the MRD charges bill is available and, when
+available, the amount. This applies to the HOSPITAL part only and is omitted
+for CASHLESS claims. The status and amount are included in Excel and PDF exports.
+
+DATABASE CHANGE:
+Hibernate ddl-auto=update adds these nullable columns to the existing case_parts
+table when the application starts:
+  mrd_bill_available BOOLEAN NULL
+  mrd_bill_amount DECIMAL(12,2) NULL
+Existing rows remain unset (NULL). For a manual MySQL migration, if schema
+updates are disabled, run:
+  ALTER TABLE case_parts ADD COLUMN mrd_bill_available BOOLEAN NULL;
+  ALTER TABLE case_parts ADD COLUMN mrd_bill_amount DECIMAL(12,2) NULL;
+
+
+HEALTH CLAIM PROJECT RENAME
+===========================
+The Java package and source folder now use com.healthclaim.casedesk.
+The Maven group ID is com.healthclaim. No obsolete brand or package names
+remain in project source or documentation filenames.
+
+For Windows prerequisites, MySQL Shell database setup, local build and launch,
+and an optional temporary Cloudflare demo link, follow DEPLOYMENT.txt.
