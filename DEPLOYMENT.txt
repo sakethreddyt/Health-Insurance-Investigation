@@ -55,6 +55,16 @@ database and exit:
 The application creates/updates its tables when it starts. Keep MySQL
 running while using the app.
 
+Existing database cleanup after upgrading from a version that allowed
+password viewing: after deploying the new code and stopping the old app,
+remove the obsolete encrypted password column in MySQL Shell:
+
+  USE casedesk;
+  ALTER TABLE app_users DROP COLUMN revealable_password;
+
+This deletes the old encrypted copies only. Normal login passwords are
+stored separately as BCrypt hashes and are not changed by this command.
+
 3. BUILD AND RUN LOCALLY
 ------------------------
 

@@ -84,15 +84,9 @@ Isolation: users carry an `ownerAdmin`; each case part also has an owner State A
 - Aadhaar/PAN/DL/bank fields are **AES-256-GCM encrypted in the database**.
 - Uploads: type verified by file signature (JPG/PNG/PDF), size-capped, random names, stored outside the web root, served only through an authenticated, scope-checked endpoint.
 - Strict CSP (no inline scripts), no framing, no-referrer, HSTS, `nosniff`. Excel export neutralises formula injection.
-- Audit log: logins/failures, lockouts, every password view/reset, approvals, case actions, exports.
-
-### ⚠ The investigator-password-visibility trade-off
-You asked that admins can see investigators' current username **and password**. A hashed password cannot be shown, so for
-**investigators only** a second copy is stored *encrypted* (AES-GCM) and an admin can reveal it. It is hidden by default, shown only
-on click for 15 seconds, only to Main/State admins in scope, and **every reveal is audit-logged**. The cost: anyone with the
-database **and** `APP_CRYPTO_KEY` could read those passwords, and an investigator's password is not secret from the admin.
-Office assistants, state admins and the main admin never have a revealable copy. If you later drop this requirement,
-delete `revealablePassword` and the `reveal` endpoint and you are fully hash-only.
+- Audit log: logins/failures, lockouts, password resets, approvals, case actions, exports.
+- Passwords are stored as BCrypt hashes only; admins cannot view another user's password. An admin reset requires that user
+  to choose a new password at their next login.
 
 ## Still recommended before real use
 - Run behind HTTPS (Nginx/Caddy + Let's Encrypt). Do not expose port 8080 directly.

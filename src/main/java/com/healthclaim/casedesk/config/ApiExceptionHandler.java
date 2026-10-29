@@ -1,7 +1,9 @@
 package com.healthclaim.casedesk.config;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -10,13 +12,27 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, String>> status(ResponseStatusException e) {
+    public ResponseEntity<?> status(ResponseStatusException e, HttpServletRequest request) throws IOException {
+        String accept = request.getHeader("Accept");
+        if (e.getStatusCode().value() == HttpStatus.NOT_FOUND.value()
+                && request.getRequestURI().matches("/api/users/[^/]+/aadhar-file")
+                && accept != null && accept.contains(MediaType.TEXT_HTML_VALUE)) {
+            ClassPathResource page = new ClassPathResource("static/aadhar-not-found.html");
+            String html;
+            try (var input = page.getInputStream()) {
+                html = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            }
+            return ResponseEntity.status(e.getStatusCode()).contentType(MediaType.TEXT_HTML).body(html);
+        }
         return ResponseEntity.status(e.getStatusCode()).body(Map.of("message", e.getReason() == null ? "Error" : e.getReason()));
     }
 

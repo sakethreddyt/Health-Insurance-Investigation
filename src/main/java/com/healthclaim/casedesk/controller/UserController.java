@@ -89,14 +89,6 @@ public class UserController {
         return Map.of("status", "ok");
     }
 
-    /** Admin-only. Each call is audit-logged. */
-    @GetMapping("/{username}/password")
-    @PreAuthorize(ADMIN)
-    public ResponseEntity<Map<String, String>> reveal(@AuthenticationPrincipal Actor a, @PathVariable String username) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                .body(Map.of("password", users.revealPassword(a, username)));
-    }
-
     @GetMapping("/{username}/photo")
     public ResponseEntity<byte[]> photo(@AuthenticationPrincipal Actor a, @PathVariable String username) {
         return serve(users.file(a, username, true));

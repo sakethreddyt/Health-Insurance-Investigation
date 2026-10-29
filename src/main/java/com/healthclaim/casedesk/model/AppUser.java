@@ -18,11 +18,6 @@ public class AppUser {
     @Column(nullable = false, length = 100)
     private String passwordHash;           // BCrypt — used for login
 
-    /** ONLY for investigators: AES-GCM encrypted copy so an admin can view it. Never set for other roles. */
-    @Convert(converter = EncryptedStringConverter.class)
-    @Column(length = 255)
-    private String revealablePassword;
-
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
     private Role role;
 
@@ -63,8 +58,6 @@ public class AppUser {
     public void setUsername(String v) { this.username = v; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String v) { this.passwordHash = v; }
-    public String getRevealablePassword() { return revealablePassword; }
-    public void setRevealablePassword(String v) { this.revealablePassword = v; }
     public Role getRole() { return role; }
     public void setRole(Role v) { this.role = v; }
     public String getFullName() { return fullName; }

@@ -1041,7 +1041,7 @@ function renderInvTable() {
   const host = $('#invTable'); if (!host) return;
   if (!list.length) { host.innerHTML = '<div class="empty">No investigators here.</div>'; return; }
   const adm = isAdmin();
-  host.innerHTML = '<table><thead><tr><th></th><th>Name</th><th>Username</th>' + (adm ? '<th>Password</th>' : '') + '<th>District</th><th>Mobile</th><th>Status</th><th></th></tr></thead><tbody>'
+  host.innerHTML = '<table><thead><tr><th></th><th>Name</th><th>Username</th><th>District</th><th>Mobile</th><th>Status</th><th></th></tr></thead><tbody>'
     + list.map(u => {
       const a = [];
       a.push('<button class="btn sm" data-act="viewUser" data-arg="' + esc(u.username) + '">View</button>');
@@ -1049,18 +1049,9 @@ function renderInvTable() {
       if (adm && u.approvalStatus === 'PENDING_APPROVAL') { a.push('<button class="btn sm brick" data-act="approveUser" data-arg="' + esc(u.username) + '">Approve</button>'); a.push('<button class="btn sm ghost" data-act="sendBackUser" data-arg="' + esc(u.username) + '">Send back</button>'); }
       if (adm) { a.push('<button class="btn sm ghost" data-act="resetPw" data-arg="' + esc(u.username) + '">Reset password</button>'); a.push('<button class="btn sm ghost" data-act="toggleActive" data-arg="' + esc(u.username) + '|' + (u.active ? 'false' : 'true') + '">' + (u.active ? 'Deactivate' : 'Activate') + '</button>'); }
       return '<tr><td>' + (u.hasPhoto ? '<img class="thumb" alt="" src="/api/users/' + enc(u.username) + '/photo">' : '') + '</td><td>' + esc(u.fullName) + '</td><td class="mono">' + esc(u.username) + '</td>'
-        + (adm ? '<td><span class="pwcell" id="pw_' + esc(u.username) + '">••••••••</span> <button class="link" data-act="togglePw" data-arg="' + esc(u.username) + '">Show</button></td>' : '')
         + '<td>' + esc([u.district, u.state].filter(Boolean).join(', ')) + '</td><td>' + esc(u.mobile) + '</td><td>' + APPROVAL_BADGE(u) + '</td><td style="display:flex;gap:6px;flex-wrap:wrap;">' + a.join('') + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
-const pwTimers = {};
-A.togglePw = async (u, el) => {
-  const span = document.getElementById('pw_' + u);
-  if (el.textContent === 'Hide') { span.textContent = '••••••••'; el.textContent = 'Show'; clearTimeout(pwTimers[u]); return; }
-  const r = await api('/api/users/' + enc(u) + '/password');
-  span.textContent = r.password; el.textContent = 'Hide';
-  pwTimers[u] = setTimeout(() => { span.textContent = '••••••••'; el.textContent = 'Show'; }, 15000);   // auto-hide
-};
 A.viewUser = async u => {
   const x = await api('/api/users/' + enc(u));
   openModal('Investigator — ' + x.fullName,
@@ -1074,7 +1065,7 @@ A.approveUser = async u => { await api('/api/users/' + enc(u) + '/approve', 'POS
 A.sendBackUser = u => dialog('Send back to office assistant', '<div class="field"><label>What needs to change?</label><textarea id="sbuNote" maxlength="1000"></textarea></div>', 'Send back',
   async () => { await api('/api/users/' + enc(u) + '/send-back', 'POST', { note: $('#sbuNote').value }); toast('Sent back for changes.'); await vInvestigators(); refreshBadges(); });
 A.toggleActive = async arg => { const [u, v] = arg.split('|'); await api('/api/users/' + enc(u) + '/active/' + v, 'POST'); toast(v === 'true' ? 'Activated.' : 'Deactivated — they are signed out immediately.'); showTab(TAB); };
-A.resetPw = u => dialog('Reset password — ' + u, field('rpNew', 'New password', '', 'text', 'autocomplete="off"') + '<div class="hint">At least 8 characters with a letter and a digit. Tell the person their new password.</div>', 'Reset',
+A.resetPw = u => dialog('Reset password — ' + u, field('rpNew', 'Temporary password', '', 'password', 'autocomplete="new-password"') + '<div class="hint">At least 8 characters with a letter and a digit. The person must choose a new password at next login.</div>', 'Reset',
   async () => { await api('/api/users/' + enc(u) + '/password', 'PUT', { newPassword: $('#rpNew').value }); toast('Password reset.'); });
 
 /* investigator create / edit form */
@@ -1083,7 +1074,7 @@ function invFormHtml(p, u, owners) {
   return (owners ? '<div class="field"><label>Belongs to admin</label><select id="' + p + 'Owner">' + owners.map(o => '<option value="' + esc(o.username) + '">' + esc(o.fullName) + (o.state ? ' (' + esc(o.state) + ')' : '') + '</option>').join('') + '</select></div>' : '')
     + (u.reviewNote && u.approvalStatus === 'CHANGES_REQUESTED' ? '<div class="alert red"><b>Admin asked for changes:</b> ' + esc(u.reviewNote) + '</div>' : '')
     + '<div class="section-title">Login</div><div class="row">' + field(p + 'Name', 'Full name', u.fullName, 'text', 'maxlength="120"')
-    + (create ? field(p + 'User', 'Username', '', 'text', 'maxlength="40" autocomplete="off"') + field(p + 'Pass', 'Initial password', '', 'text', 'autocomplete="off"') : '') + '</div>'
+    + (create ? field(p + 'User', 'Username', '', 'text', 'maxlength="40" autocomplete="off"') + field(p + 'Pass', 'Initial password', '', 'password', 'autocomplete="new-password"') : '') + '</div>'
     + '<div class="row">' + stateField(p + 'State', 'State', u.state, p + 'District') + districtField(p + 'District', 'District', u.district, u.state) + field(p + 'Mobile', 'Mobile number', u.mobile, 'text', 'maxlength="15"') + '</div>'
     + '<div class="section-title">Identity & bank details</div><div class="row">' + field(p + 'Aadhar', 'Aadhaar number', u.aadhar, 'text', 'maxlength="20"') + field(p + 'Pan', 'PAN number', u.pan, 'text', 'maxlength="12"') + field(p + 'Dl', 'Driving licence number', u.dl, 'text', 'maxlength="30"') + '</div>'
     + '<div class="row">' + field(p + 'Bank', 'Bank name & branch', u.bankName, 'text', 'maxlength="120"') + field(p + 'Acc', 'Bank account number', u.bankAcc, 'text', 'maxlength="30"') + field(p + 'Ifsc', 'IFSC code', u.ifsc, 'text', 'maxlength="15"') + '</div>'
@@ -1145,7 +1136,7 @@ async function vSimpleUsers(role) {
       + '<button class="btn sm ghost" data-act="toggleActive" data-arg="' + esc(u.username) + '|' + (u.active ? 'false' : 'true') + '">' + (u.active ? 'Deactivate' : 'Activate') + '</button></td></tr>').join('') + '</tbody></table></div>' : '<div class="empty">None yet.</div>') + '</div>'
     + '<div class="card"><h3>Add ' + (role === 'STATE_ADMIN' ? 'a state admin' : 'an office assistant') + '</h3>'
     + (owners ? '<div class="field"><label>Belongs to admin</label><select id="suOwner">' + owners.map(o => '<option value="' + esc(o.username) + '">' + esc(o.fullName) + (o.state ? ' (' + esc(o.state) + ')' : '') + '</option>').join('') + '</select></div>' : '')
-    + '<div class="row">' + field('suName', 'Full name', '', 'text', 'maxlength="120"') + field('suUser', 'Username', '', 'text', 'maxlength="40" autocomplete="off"') + field('suPass', 'Temporary password', '', 'text', 'autocomplete="off"') + '</div>'
+    + '<div class="row">' + field('suName', 'Full name', '', 'text', 'maxlength="120"') + field('suUser', 'Username', '', 'text', 'maxlength="40" autocomplete="off"') + field('suPass', 'Temporary password', '', 'password', 'autocomplete="new-password"') + '</div>'
     + '<div class="row">' + field('suMobile', 'Mobile number', '', 'text', 'maxlength="15"') + stateField('suState', 'State', '', 'suDistrict') + districtField('suDistrict', 'District', '', '') + '</div>'
     + '<div class="field"><label for="suPhoto">Profile photo (JPG or PNG, max 2 MB — optional)</label><input id="suPhoto" type="file" accept="image/jpeg,image/png"></div>'
     + '<div class="hint">They are forced to choose their own password at first login.</div><div class="err" id="suErr"></div>'
@@ -1186,7 +1177,7 @@ A.editSimpleUser = async username => {
 /* ---------------------------------------------------------------- audit log (main admin) */
 async function vAudit() {
   const rows = await api('/api/audit?limit=300');
-  setView('<div class="toolbar"><h2>Audit log</h2></div><div class="card"><div class="hint" style="margin-bottom:8px;">Logins, password views/resets, approvals, case actions and exports. Latest 300 entries.</div><div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th><th>IP</th></tr></thead><tbody>'
+  setView('<div class="toolbar"><h2>Audit log</h2></div><div class="card"><div class="hint" style="margin-bottom:8px;">Logins, password resets, approvals, case actions and exports. Latest 300 entries.</div><div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th><th>IP</th></tr></thead><tbody>'
     + rows.map(r => '<tr><td>' + esc(new Date(r.at).toLocaleString()) + '</td><td>' + esc(r.actor) + '</td><td>' + esc(r.action) + '</td><td>' + esc(r.target) + '</td><td style="white-space:normal;">' + esc(r.detail) + '</td><td class="mono">' + esc(r.ip) + '</td></tr>').join('') + '</tbody></table></div></div>');
 }
 

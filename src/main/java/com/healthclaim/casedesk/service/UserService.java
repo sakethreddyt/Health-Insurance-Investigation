@@ -150,7 +150,6 @@ public class UserService {
             if (photo == null || photo.isEmpty()) throw bad("Passport-size photo is required.");
             if (aadharFile == null || aadharFile.isEmpty()) throw bad("Aadhaar card upload is required.");
             applyKyc(u, r);
-            u.setRevealablePassword(r.password());
             u.setApprovalStatus(a.role().isAdmin() ? UserStatus.APPROVED : UserStatus.PENDING_APPROVAL);
             u.setMustChangePassword(false);
             u.setPhotoFile(files.store(photo, false, PHOTO_MAX));
@@ -267,21 +266,11 @@ public class UserService {
         requireCanManage(a, u);
         checkPassword(newPassword);
         u.setPasswordHash(encoder.encode(newPassword));
-        if (u.getRole() == Role.INVESTIGATOR) u.setRevealablePassword(newPassword);
-        else u.setMustChangePassword(true);
+        u.setMustChangePassword(true);
         u.setFailedAttempts(0);
         u.setLockedUntil(null);
         repo.save(u);
         audit.log(a.username(), "PASSWORD_RESET", username, null);
-    }
-
-    /** Admin only, investigators only. Every reveal is written to the audit log. */
-    public String revealPassword(Actor a, String username) {
-        requireAdmin(a);
-        AppUser u = load(a, username);
-        if (u.getRole() != Role.INVESTIGATOR || u.getRevealablePassword() == null) throw forbidden();
-        audit.log(a.username(), "PASSWORD_VIEWED", username, null);
-        return u.getRevealablePassword();
     }
 
     public void changeOwnPassword(Actor a, String current, String next) {
@@ -290,7 +279,6 @@ public class UserService {
         checkPassword(next);
         if (encoder.matches(next, u.getPasswordHash())) throw bad("Choose a password different from the current one.");
         u.setPasswordHash(encoder.encode(next));
-        if (u.getRole() == Role.INVESTIGATOR) u.setRevealablePassword(next);
         u.setMustChangePassword(false);
         repo.save(u);
         audit.log(a.username(), "PASSWORD_CHANGED", a.username(), null);
@@ -342,8 +330,6 @@ public class UserService {
             m.put("bankAcc", u.getBankAcc());
             m.put("ifsc", u.getIfsc());
         }
-        // true only for admins looking at an investigator; the password itself is fetched on demand
-        m.put("canViewPassword", viewer.role().isAdmin() && u.getRole() == Role.INVESTIGATOR);
         return m;
     }
 
